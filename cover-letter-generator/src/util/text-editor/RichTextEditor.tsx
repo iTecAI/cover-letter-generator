@@ -16,7 +16,7 @@ import {
     TextField,
 } from "@mui/material";
 import { useForm } from "../forms";
-import { FieldContext, TemplateField } from "../../types";
+import { FieldContext, TemplateField, defaultFields } from "../../types";
 
 const formats = [
     "header",
@@ -145,7 +145,21 @@ function CustomFieldDialog(props: {
                         fullWidth
                         options={Object.keys(fields.fields)}
                         renderInput={(params) => (
-                            <TextField label="Field Name" {...params} />
+                            <TextField
+                                label="Field Name"
+                                onBlur={(event) => {
+                                    setForm(
+                                        "name",
+                                        event.target.value
+                                            ? event.target.value
+                                                  .replace(/ /g, "_")
+                                                  .replace(/[^\w]/g, "")
+                                                  .toLowerCase()
+                                            : ""
+                                    );
+                                }}
+                                {...params}
+                            />
                         )}
                         freeSolo
                     />
@@ -219,7 +233,14 @@ function CustomFieldDialog(props: {
                                                 .length,
                                         },
                                         {
-                                            insert: `{{${customField.normalized_selection}:${customField.selected}}}`,
+                                            insert: Object.keys(
+                                                fields.fields
+                                            ).includes(form.name)
+                                                ? `{{${form.name}:${
+                                                      fields.fields[form.name]
+                                                          .label
+                                                  }}}`
+                                                : `{{${form.name}:${form.label}}}`,
                                         },
                                     ].filter(Boolean),
                                 } as Delta,

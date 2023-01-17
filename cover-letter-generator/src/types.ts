@@ -30,3 +30,23 @@ export type FieldContextType = {
     };
 };
 export const FieldContext = createContext<FieldContextType | null>(null);
+
+export const defaultFields: {
+    [key: string]: TemplateField;
+} = {
+    first: {
+        label: "First Name",
+    },
+    last: {
+        label: "Last Name",
+    },
+    phone: {
+        label: "Phone Number",
+    },
+    email: {
+        label: "Email",
+    },
+    date: {
+        label: "Date",
+    },
+};

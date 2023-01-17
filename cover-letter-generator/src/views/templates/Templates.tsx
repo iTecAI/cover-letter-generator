@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { FieldContext, Template, TemplateField } from "../../types";
+import {
+    FieldContext,
+    Template,
+    TemplateField,
+    defaultFields,
+} from "../../types";
 import { Masonry } from "@mui/lab";
 import {
     Button,
@@ -43,7 +48,21 @@ function TemplateFieldItem(props: {
 
     return (
         <Grid item xs={4}>
-            <Paper elevation={1} className="field-item">
+            <Paper
+                elevation={1}
+                className="field-item"
+                sx={
+                    Object.keys(defaultFields).includes(name) && {
+                        opacity: 0.5,
+                        pointerEvents: "none",
+                    }
+                }
+                variant={
+                    Object.keys(defaultFields).includes(name)
+                        ? "outlined"
+                        : "elevation"
+                }
+            >
                 <TextField
                     className="title"
                     value={fieldConf.label}
@@ -86,12 +105,18 @@ function TemplateDialog(props: {
     }
 
     function submit() {
+        const filteredFields: { [key: string]: TemplateField } = {};
+        Object.keys(fields).forEach((v) => {
+            if (!Object.keys(defaultFields).includes(v)) {
+                filteredFields[v] = fields[v];
+            }
+        });
         fs.writeFile(
             path.join(".", "templates", file),
             JSON.stringify({
                 name: vals.name,
                 desc: vals.desc,
-                fields: fields,
+                fields: filteredFields,
                 text: vals.text,
             }),
             { encoding: "utf8" }
@@ -204,7 +229,7 @@ function TemplateDialog(props: {
                         }
                     />
                     <Paper variant="outlined" className="field-container">
-                        <Grid container spacing={2}>
+                        <Grid container spacing={1}>
                             {Object.keys(fields)
                                 .filter((v) => Boolean(fields[v]))
                                 .map((f) => (
@@ -222,11 +247,13 @@ function TemplateDialog(props: {
                                 ))}
                         </Grid>
                     </Paper>
-                    <FieldContext.Provider value={{ fields }}>
+                    <FieldContext.Provider
+                        value={{ fields: { ...defaultFields, ...fields } }}
+                    >
                         <RichTextEditor
                             value={vals.text}
                             onChange={(value) => setVals("text", value)}
-                            height="256px"
+                            height="384px"
                             fields
                         />
                     </FieldContext.Provider>
@@ -269,6 +296,10 @@ function TemplateItem(props: {
                             <CardContent>
                                 {Object.keys(template.fields).map((field) => (
                                     <Chip
+                                        sx={{
+                                            marginRight: "4px",
+                                            marginBottom: "4px",
+                                        }}
                                         label={template.fields[field].label}
                                         key={field}
                                     />

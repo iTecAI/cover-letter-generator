@@ -1,6 +1,8 @@
 .template-dialog {
     .field-container {
         padding: 8px;
+        max-height: 128px;
+        overflow-y: auto;
 
         .field-item {
             padding: 8px;
