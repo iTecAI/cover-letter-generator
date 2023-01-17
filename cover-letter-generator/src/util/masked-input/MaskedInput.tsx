@@ -4,24 +4,22 @@ import { TextField, TextFieldProps } from "@mui/material";
 
 interface MaskedProps {
     onChange: (event: { target: { name: string; value: string } }) => void;
-    mask: any;
-    defs: any;
     name: string;
+    mask: any;
 }
 
 const TextMaskCustom = React.forwardRef<HTMLElement, MaskedProps>(
     function TextMaskCustom(props, ref) {
-        const { onChange, mask, defs, ...other } = props;
+        const { onChange, mask, ...other } = props;
         return (
             <IMaskInput
                 {...other}
-                mask={mask}
-                definitions={defs}
                 inputRef={ref as any}
                 onAccept={(value: any) =>
                     onChange({ target: { name: props.name, value } })
                 }
                 overwrite
+                mask={mask}
             />
         );
     }
@@ -32,7 +30,7 @@ export function MaskedTextField(
         onChange?: (value: string) => void;
         value?: string;
         mask: any;
-        defs: any;
+        options?: any;
         label: string;
     }
 ): JSX.Element {
@@ -56,7 +54,8 @@ export function MaskedTextField(
                 inputComponent: TextMaskCustom as any,
                 inputProps: {
                     ...((props.InputProps ?? {}).inputProps ?? {}),
-                    ...(props as any),
+                    mask: props.mask,
+                    ...(props.options ?? {}),
                 },
             }}
             value={value}
