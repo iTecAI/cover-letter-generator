@@ -1,4 +1,5 @@
 import { Paper } from "@mui/material";
+import * as React from "react";
 
 export function MuiRichTextToolbar(props: { id: string }): JSX.Element {
     return (
