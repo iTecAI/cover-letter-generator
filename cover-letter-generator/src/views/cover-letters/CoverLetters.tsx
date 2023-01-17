@@ -12,7 +12,8 @@ import { MdPerson } from "react-icons/md";
 import { MaskedTextField } from "../../util/masked-input/MaskedInput";
 import moment, { Moment } from "moment";
 import { DatePicker } from "@mui/x-date-pickers";
-import { ReactElement, useEffect, useReducer } from "react";
+import { useReducer } from "react";
+import { UserInfo } from "../../types";
 
 function reduceForm(
     state: { [key: string]: any },
@@ -31,14 +32,6 @@ function useForm<T>(initial?: T): [T, (name: keyof T, value: any) => void] {
             dispatch({ field: name as string, value }),
     ];
 }
-
-type UserInfo = {
-    first: string;
-    last: string;
-    phone: string;
-    email: string;
-    date: Moment;
-};
 
 export function CoverLetterPage() {
     const [userInfo, setUserInfo] = useForm<UserInfo>({

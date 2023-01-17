@@ -14,10 +14,18 @@ import {
 } from "@mui/material";
 import { MdClose, MdDescription } from "react-icons/md";
 import * as React from "react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import {
+    MemoryRouter,
+    Outlet,
+    Route,
+    Routes,
+    useLocation,
+    useNavigate,
+} from "react-router-dom";
 import { CoverLetterPage } from "./views/cover-letters/CoverLetters";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import { TemplatePage } from "./views/templates/Templates";
 
 const fss = window.require("fs");
 const fs = window.require("fs/promises");
@@ -30,6 +38,51 @@ function setup() {
     }
 }
 
+function Layout() {
+    const nav = useNavigate();
+    const loc = useLocation();
+    return (
+        <Box
+            className="app-root"
+            sx={{
+                backgroundColor: "background.default",
+            }}
+        >
+            <AppBar elevation={2} className="toolbar">
+                <Toolbar>
+                    <MdDescription className="icon" size={24} />
+                    <Typography variant="h5" className="title">
+                        Cover Letter Generator
+                    </Typography>
+                    <Stack className="pages" spacing={2} direction={"row"}>
+                        <Button
+                            className="btn-main"
+                            onClick={() => nav("/")}
+                            variant={loc.pathname === "/" ? "outlined" : "text"}
+                        >
+                            Generator
+                        </Button>
+                        <Button
+                            className="btn-templates"
+                            onClick={() => nav("/templates")}
+                            variant={
+                                loc.pathname === "/templates"
+                                    ? "outlined"
+                                    : "text"
+                            }
+                        >
+                            Templates
+                        </Button>
+                    </Stack>
+                </Toolbar>
+            </AppBar>
+            <Box className="content">
+                <Outlet />
+            </Box>
+        </Box>
+    );
+}
+
 function App() {
     useEffect(() => {
         setup();
@@ -38,38 +91,17 @@ function App() {
     return (
         <ThemeProvider theme={themeOptionsDefault}>
             <LocalizationProvider dateAdapter={AdapterMoment}>
-                <Box
-                    className="app-root"
-                    sx={{
-                        backgroundColor: "background.default",
-                    }}
-                >
-                    <AppBar elevation={2} className="toolbar">
-                        <Toolbar>
-                            <MdDescription className="icon" size={24} />
-                            <Typography variant="h5" className="title">
-                                Cover Letter Generator
-                            </Typography>
-                            <Stack
-                                className="pages"
-                                spacing={2}
-                                direction={"row"}
-                            >
-                                <Button className="btn-main">Generator</Button>
-                                <Button className="btn-templates">
-                                    Templates
-                                </Button>
-                            </Stack>
-                        </Toolbar>
-                    </AppBar>
-                    <Box className="content">
-                        <MemoryRouter>
-                            <Routes>
-                                <Route path="/" element={<CoverLetterPage />} />
-                            </Routes>
-                        </MemoryRouter>
-                    </Box>
-                </Box>
+                <MemoryRouter>
+                    <Routes>
+                        <Route path="/" element={<Layout />}>
+                            <Route index element={<CoverLetterPage />} />
+                            <Route
+                                path="templates"
+                                element={<TemplatePage />}
+                            />
+                        </Route>
+                    </Routes>
+                </MemoryRouter>
             </LocalizationProvider>
         </ThemeProvider>
     );
