@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Template, TemplateField } from "../../types";
+import { FieldContext, Template, TemplateField } from "../../types";
 import { Masonry } from "@mui/lab";
 import {
     Button,
@@ -158,7 +158,7 @@ function TemplateDialog(props: {
             setVals("text", newText);
         }
         if (JSON.stringify(newFields) !== JSON.stringify(fields)) {
-            setFields(newFields);
+            setFields(JSON.parse(JSON.stringify(newFields)));
         }
     }, [vals.text, fields]);
 
@@ -222,12 +222,14 @@ function TemplateDialog(props: {
                                 ))}
                         </Grid>
                     </Paper>
-                    <RichTextEditor
-                        value={vals.text}
-                        onChange={(value) => setVals("text", value)}
-                        height="256px"
-                        fields
-                    />
+                    <FieldContext.Provider value={{ fields }}>
+                        <RichTextEditor
+                            value={vals.text}
+                            onChange={(value) => setVals("text", value)}
+                            height="256px"
+                            fields
+                        />
+                    </FieldContext.Provider>
                 </Stack>
             </DialogContent>
             <DialogActions>

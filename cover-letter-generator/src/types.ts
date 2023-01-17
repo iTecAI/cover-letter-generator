@@ -1,4 +1,5 @@
 import { Moment } from "moment";
+import { createContext } from "react";
 
 export type UserInfo = {
     first: string;
@@ -22,3 +23,10 @@ export type Template = {
     };
     text: string;
 };
+
+export type FieldContextType = {
+    fields: {
+        [key: string]: TemplateField;
+    };
+};
+export const FieldContext = createContext<FieldContextType | null>(null);
