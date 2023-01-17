@@ -1,7 +1,11 @@
 import { Paper } from "@mui/material";
 import * as React from "react";
+import { MdNewLabel } from "react-icons/md";
 
-export function MuiRichTextToolbar(props: { id: string }): JSX.Element {
+export function MuiRichTextToolbar(props: {
+    id: string;
+    fields: boolean;
+}): JSX.Element {
     return (
         <Paper id={props.id}>
             <span className="ql-formats">
@@ -43,6 +47,16 @@ export function MuiRichTextToolbar(props: { id: string }): JSX.Element {
                 <button className="ql-code-block" />
                 <button className="ql-clean" />
             </span>
+            {props.fields && (
+                <span className="ql-formats">
+                    <button
+                        className="ql-customField"
+                        style={{ width: "fit-content", whiteSpace: "nowrap" }}
+                    >
+                        <MdNewLabel size={24} /> Add Field
+                    </button>
+                </span>
+            )}
         </Paper>
     );
 }

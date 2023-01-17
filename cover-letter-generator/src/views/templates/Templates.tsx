@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Template } from "../../types";
+import { Template, TemplateField } from "../../types";
 import { Masonry } from "@mui/lab";
 import {
     Button,
@@ -12,15 +12,53 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Grid,
+    Paper,
     TextField,
     Typography,
 } from "@mui/material";
 import { useForm } from "../../util/forms";
 import { Stack } from "@mui/system";
 import RichTextEditor from "../../util/text-editor/RichTextEditor";
+import "./style.scss";
 
 const path = window.require("node:path");
 const fs = window.require("node:fs/promises");
+
+function TemplateFieldItem(props: {
+    name: string;
+    field: TemplateField;
+    setField: (name: string, field: TemplateField) => void;
+}): JSX.Element {
+    const { name, field } = props;
+    const [fieldConf, setFieldConf] = useForm<TemplateField>({
+        label: field.label,
+        wide: field.wide ?? false,
+        placeholder: field.placeholder ?? "",
+    });
+
+    useEffect(() => {
+        props.setField(name, fieldConf);
+    }, [fieldConf]);
+
+    return (
+        <Grid item xs={4}>
+            <Paper elevation={1} className="field-item">
+                <TextField
+                    className="title"
+                    value={fieldConf.label}
+                    variant="standard"
+                    onChange={(event) =>
+                        setFieldConf("label", event.target.value)
+                    }
+                />
+                <Typography variant="subtitle1" className="subtitle">
+                    {name}
+                </Typography>
+            </Paper>
+        </Grid>
+    );
+}
 
 function TemplateDialog(props: {
     template: Template;
@@ -68,13 +106,81 @@ function TemplateDialog(props: {
         setFields(template.fields);
     }, [open, template]);
 
+    useEffect(() => {
+        const fieldStrings = vals.text.match(/\{\{\w*:[^\}]*\}\}/g) ?? [];
+        const rawFields: { label: string; name: string }[] = fieldStrings.map(
+            (str) => {
+                return {
+                    label: str.split(":")[1].split("}}")[0],
+                    name: str.split(":")[0].split("{{")[1],
+                };
+            }
+        );
+        const fieldNames: string[] = rawFields.map((v) => v.name);
+
+        const newFields: { [key: string]: TemplateField } = JSON.parse(
+            JSON.stringify(fields)
+        );
+
+        const toReplace: { label: string; name: string }[] = [];
+        for (const rf of rawFields) {
+            if (!Object.keys(newFields).includes(rf.name)) {
+                newFields[rf.name] = {
+                    label: rf.label,
+                    wide: false,
+                    placeholder: "",
+                };
+            } else {
+                if (rf.label !== newFields[rf.name].label) {
+                    toReplace.push({
+                        label: newFields[rf.name].label,
+                        name: rf.name,
+                    });
+                }
+            }
+        }
+
+        for (const f in newFields) {
+            if (!fieldNames.includes(f)) {
+                newFields[f] = undefined;
+            }
+        }
+
+        let newText: string = vals.text;
+        for (const r of toReplace) {
+            newText = newText.replace(
+                new RegExp(`\{\{${r.name}:[^\}]*\}\}`, "g"),
+                `{{${r.name}:${r.label}}}`
+            );
+        }
+
+        if (newText !== vals.text) {
+            setVals("text", newText);
+        }
+        if (JSON.stringify(newFields) !== JSON.stringify(fields)) {
+            setFields(newFields);
+        }
+    }, [vals.text, fields]);
+
     return (
-        <Dialog open={open} onClose={close} fullWidth={true} maxWidth={"md"}>
+        <Dialog
+            open={open}
+            onClose={close}
+            fullWidth={true}
+            maxWidth={"lg"}
+            className="template-dialog"
+        >
             <DialogTitle>
                 Edit Template "{template.name}"
-                <Typography variant="subtitle1" sx={{ opacity: 0.5 }}>
+                <div
+                    style={{
+                        opacity: 0.5,
+                        fontWeight: "normal",
+                        fontSize: "14px",
+                    }}
+                >
                     {file}
-                </Typography>
+                </div>
             </DialogTitle>
             <DialogContent>
                 <Stack spacing={2} sx={{ marginTop: "8px" }}>
@@ -97,10 +203,30 @@ function TemplateDialog(props: {
                             setVals("desc", event.target.value)
                         }
                     />
+                    <Paper variant="outlined" className="field-container">
+                        <Grid container spacing={2}>
+                            {Object.keys(fields)
+                                .filter((v) => Boolean(fields[v]))
+                                .map((f) => (
+                                    <TemplateFieldItem
+                                        name={f}
+                                        field={fields[f]}
+                                        key={f}
+                                        setField={(name, field) => {
+                                            setFields({
+                                                ...fields,
+                                                [name]: field,
+                                            });
+                                        }}
+                                    />
+                                ))}
+                        </Grid>
+                    </Paper>
                     <RichTextEditor
                         value={vals.text}
                         onChange={(value) => setVals("text", value)}
-                        height="512px"
+                        height="256px"
+                        fields
                     />
                 </Stack>
             </DialogContent>

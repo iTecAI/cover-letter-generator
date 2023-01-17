@@ -8,11 +8,17 @@ export type UserInfo = {
     date: Moment;
 };
 
+export type TemplateField = {
+    label: string;
+    wide?: boolean;
+    placeholder?: string;
+};
+
 export type Template = {
     name: string;
     desc: string;
     fields: {
-        [key: string]: { label: string; wide?: boolean; placeholder?: string };
+        [key: string]: TemplateField;
     };
     text: string;
 };

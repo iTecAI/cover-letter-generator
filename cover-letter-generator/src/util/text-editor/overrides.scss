@@ -30,6 +30,23 @@
             background-color: $background;
             padding: 8px;
         }
+
+        .ql-tooltip {
+            border-radius: 4px;
+            background-color: $background-paper;
+            box-shadow: $paper-1;
+            border: none;
+
+            input {
+                background-color: $background;
+                border-radius: 2px;
+                border: none;
+
+                &:focus {
+                    outline: none;
+                }
+            }
+        }
     }
 
     .ql-toolbar {
@@ -57,6 +74,10 @@
 
         .ql-formats button:hover * {
             stroke: $primary;
+            color: $primary;
+        }
+
+        .ql-formats button:hover {
             color: $primary;
         }
 

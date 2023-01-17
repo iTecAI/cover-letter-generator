@@ -1,12 +1,44 @@
 import ReactQuill from "react-quill";
+import { Quill, Delta } from "quill";
 import "react-quill/dist/quill.snow.css";
 import "./overrides.scss";
 import { Box } from "@mui/system";
 import { MuiRichTextToolbar } from "./MuiToolbar";
 
+function insertCustomField(value: string) {
+    const quill: Quill = this.quill;
+    const selection = quill.getSelection();
+    const selected = quill.getText(selection.index, selection.length);
+    const normalized_selection = selected
+        .replace(/ /g, "_")
+        .replace(/[^\w]/g, "")
+        .toLowerCase();
+    quill.updateContents(
+        {
+            ops: [
+                selection.index === 0
+                    ? false
+                    : {
+                          retain: selection.index,
+                      },
+                {
+                    delete: selection.length,
+                },
+                {
+                    insert: `{{${normalized_selection}:${selected}}}`,
+                },
+            ].filter(Boolean),
+        } as Delta,
+        "user"
+    );
+}
+
 const modules = {
     toolbar: {
         container: "#mui-editor",
+        handlers: {
+            customField: insertCustomField,
+        },
     },
 };
 
@@ -26,6 +58,9 @@ const formats = [
     "image",
     "code",
     "code-block",
+    "customField",
+    "script",
+    "align",
 ];
 
 export default function RichTextEditor(props: {
@@ -33,6 +68,7 @@ export default function RichTextEditor(props: {
     value?: string;
     onChange?: (value: string) => void;
     disabled?: boolean;
+    fields?: boolean;
 }): JSX.Element {
     return (
         <Box
@@ -40,7 +76,10 @@ export default function RichTextEditor(props: {
                 props.disabled ? " disabled" : ""
             }`}
         >
-            <MuiRichTextToolbar id={"mui-editor"} />
+            <MuiRichTextToolbar
+                id={"mui-editor"}
+                fields={props.fields ?? false}
+            />
             <ReactQuill
                 theme="snow"
                 value={props.value}
