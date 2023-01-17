@@ -3,19 +3,11 @@ import { createRoot } from "react-dom/client";
 import { themeOptionsDefault } from "./theme/default";
 import { StrictMode, useEffect } from "react";
 import "./styles/app.scss";
-import {
-    AppBar,
-    Box,
-    Button,
-    IconButton,
-    Stack,
-    Toolbar,
-    Typography,
-} from "@mui/material";
-import { MdClose, MdDescription } from "react-icons/md";
+import { AppBar, Box, Button, Stack, Toolbar, Typography } from "@mui/material";
+import { MdDescription } from "react-icons/md";
 import * as React from "react";
 import {
-    MemoryRouter,
+    HashRouter,
     Outlet,
     Route,
     Routes,
@@ -34,7 +26,7 @@ function setup() {
     console.info("Performing startup...");
     if (!fss.readdirSync(".").includes("templates")) {
         console.debug("./templates does not exist; creating");
-        fs.mkdir("./templates");
+        fs.mkdir("templates");
     }
 }
 
@@ -91,7 +83,7 @@ function App() {
     return (
         <ThemeProvider theme={themeOptionsDefault}>
             <LocalizationProvider dateAdapter={AdapterMoment}>
-                <MemoryRouter>
+                <HashRouter>
                     <Routes>
                         <Route path="/" element={<Layout />}>
                             <Route index element={<CoverLetterPage />} />
@@ -101,7 +93,7 @@ function App() {
                             />
                         </Route>
                     </Routes>
-                </MemoryRouter>
+                </HashRouter>
             </LocalizationProvider>
         </ThemeProvider>
     );

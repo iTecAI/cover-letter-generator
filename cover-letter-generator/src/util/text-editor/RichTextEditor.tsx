@@ -47,7 +47,7 @@ export default function RichTextEditor(props: {
                 onChange={props.onChange}
                 style={{
                     height: props.height
-                        ? `calc(props.height - 40px)`
+                        ? `calc(${props.height} - 40px)`
                         : undefined,
                 }}
                 modules={modules}

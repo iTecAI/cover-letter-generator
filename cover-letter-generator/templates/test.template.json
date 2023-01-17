@@ -1,0 +1,1 @@
+{"name":"Test Weeeeee","desc":"A test template","fields":{"company_name":{"label":"Company Name"}},"text":"<h1>TEST TEMPLATE</h1><p>{{company_name}}</p>"}
