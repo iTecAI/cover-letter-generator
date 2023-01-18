@@ -28,6 +28,10 @@ function setup() {
         console.debug("./templates does not exist; creating");
         fs.mkdir("templates");
     }
+    if (!fss.readdirSync(".").includes("output")) {
+        console.debug("./output does not exist; creating");
+        fs.mkdir("output");
+    }
 }
 
 function Layout() {
