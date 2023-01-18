@@ -49,13 +49,15 @@ function TemplateFieldItem(props: {
     return (
         <Grid item xs={4}>
             <Paper
-                elevation={1}
+                elevation={Object.keys(defaultFields).includes(name) ? 0 : 1}
                 className="field-item"
                 sx={
-                    Object.keys(defaultFields).includes(name) && {
-                        opacity: 0.5,
-                        pointerEvents: "none",
-                    }
+                    Object.keys(defaultFields).includes(name)
+                        ? {
+                              opacity: 0.5,
+                              pointerEvents: "none",
+                          }
+                        : undefined
                 }
                 variant={
                     Object.keys(defaultFields).includes(name)
@@ -177,6 +179,19 @@ function TemplateDialog(props: {
                 new RegExp(`\{\{${r.name}:[^\}]*\}\}`, "g"),
                 `{{${r.name}:${r.label}}}`
             );
+        }
+
+        const autocompletes: string[] = (
+            newText.match(/\$\w*(?=\W|$)/g) ?? []
+        ).map((v) => v);
+        for (const a of autocompletes) {
+            const name = a.split("$")[1];
+            if (Object.keys(newFields).includes(name)) {
+                newText = newText.replace(
+                    a,
+                    `{{${name}:${newFields[name].label}}}`
+                );
+            }
         }
 
         if (newText !== vals.text) {

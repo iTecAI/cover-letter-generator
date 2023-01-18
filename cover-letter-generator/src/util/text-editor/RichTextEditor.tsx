@@ -193,7 +193,7 @@ function CustomFieldDialog(props: {
                         <TextField
                             value={
                                 Object.keys(fields.fields).includes(form.name)
-                                    ? fields.fields[form.name].placeholder
+                                    ? fields.fields[form.name].placeholder ?? ""
                                     : form.placeholder
                             }
                             onChange={(event) =>
