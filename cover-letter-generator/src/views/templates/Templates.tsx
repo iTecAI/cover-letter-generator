@@ -17,8 +17,10 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    FormControlLabel,
     Grid,
     Paper,
+    Switch,
     TextField,
     Typography,
 } from "@mui/material";
@@ -67,6 +69,7 @@ function TemplateFieldItem(props: {
             >
                 <TextField
                     className="title"
+                    fullWidth
                     value={fieldConf.label}
                     variant="standard"
                     onChange={(event) =>
@@ -76,6 +79,34 @@ function TemplateFieldItem(props: {
                 <Typography variant="subtitle1" className="subtitle">
                     {name}
                 </Typography>
+                <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                        <TextField
+                            label="Placeholder"
+                            fullWidth
+                            value={fieldConf.placeholder ?? ""}
+                            onChange={(event) =>
+                                setFieldConf("placeholder", event.target.value)
+                            }
+                            variant="standard"
+                            className="placeholder"
+                        />
+                    </Grid>
+                    <Grid item xs={6} className="wide-container">
+                        <FormControlLabel
+                            label="Wide"
+                            className="wide"
+                            control={
+                                <Switch
+                                    checked={fieldConf.wide ?? false}
+                                    onChange={(event) =>
+                                        setFieldConf("wide", !fieldConf.wide)
+                                    }
+                                />
+                            }
+                        />
+                    </Grid>
+                </Grid>
             </Paper>
         </Grid>
     );
@@ -247,6 +278,10 @@ function TemplateDialog(props: {
                         <Grid container spacing={1}>
                             {Object.keys(fields)
                                 .filter((v) => Boolean(fields[v]))
+                                .filter(
+                                    (v) =>
+                                        !Object.keys(defaultFields).includes(v)
+                                )
                                 .map((f) => (
                                     <TemplateFieldItem
                                         name={f}

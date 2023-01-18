@@ -15,6 +15,17 @@
                 opacity: 0.6;
                 font-size: 14px;
             }
+
+            .wide-container {
+                position: relative;
+
+                .wide {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                }
+            }
         }
     }
 }
