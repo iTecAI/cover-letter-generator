@@ -4,6 +4,7 @@ import {
     AccordionSummary,
     Autocomplete,
     Avatar,
+    Button,
     Card,
     CardContent,
     CardHeader,
@@ -11,17 +12,19 @@ import {
     IconButton,
     Stack,
     TextField,
+    Typography,
 } from "@mui/material";
 import "./style.scss";
 import {
     MdAdd,
+    MdCheck,
     MdDescription,
     MdExpandMore,
     MdPerson,
     MdTableRows,
 } from "react-icons/md";
 import { MaskedTextField } from "../../util/masked-input/MaskedInput";
-import moment, { Moment } from "moment";
+import moment, { Moment, fn } from "moment";
 import { DatePicker } from "@mui/x-date-pickers";
 import { useForm } from "../../util/forms";
 import { CoverLetter, Template, UserInfo } from "../../types";
@@ -43,17 +46,22 @@ function CoverLetterItem(props: {
     return temp ? (
         <Accordion className="cover-letter-item">
             <AccordionSummary expandIcon={<MdExpandMore size={24} />}>
-                <TextField
-                    variant="standard"
-                    value={props.letter.name}
-                    onChange={(event) =>
-                        props.setLetter({
-                            ...props.letter,
-                            name: event.target.value,
-                        })
-                    }
-                    onClick={(event) => event.stopPropagation()}
-                />
+                <Stack spacing={0.5}>
+                    <TextField
+                        variant="standard"
+                        value={props.letter.name}
+                        onChange={(event) =>
+                            props.setLetter({
+                                ...props.letter,
+                                name: event.target.value,
+                            })
+                        }
+                        onClick={(event) => event.stopPropagation()}
+                    />
+                    <Typography variant="subtitle1" className="template-name">
+                        {temp.name}
+                    </Typography>
+                </Stack>
             </AccordionSummary>
             <AccordionDetails>
                 <Grid container spacing={2}>
@@ -145,7 +153,7 @@ export function CoverLetterPage() {
                     );
                     newLetters[file.split(".")[0]] = JSON.parse(contents);
                 } catch (err) {
-                    console.error(err.message);
+                    return;
                 }
             }
         }
@@ -159,9 +167,11 @@ export function CoverLetterPage() {
         (async function () {
             const cache: string[] = await fs.readdir("output");
             const fnames = Object.keys(letters).map((v) => `${v}.letter.json`);
-            for (const f of cache) {
-                if (!fnames.includes(f)) {
-                    fs.rm(path.join("output", `${f}.letter.json`));
+            if (fnames.length === 0) {
+                for (const f of cache) {
+                    if (!fnames.includes(f)) {
+                        fs.rm(path.join("output", f));
+                    }
                 }
             }
         })();
@@ -290,6 +300,39 @@ export function CoverLetterPage() {
                 </CardContent>
             </Card>
             <Card variant="outlined" className="letters section">
+                <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<MdCheck size={24} />}
+                    className="generate-btn"
+                    onClick={() =>
+                        Object.keys(letters).forEach((v) => {
+                            const letter: CoverLetter = letters[v];
+                            const template: Template = (templates.filter(
+                                (t) => t[1] === letter.template
+                            )[0] ?? [])[0];
+                            if (template === undefined) {
+                                return;
+                            }
+                            let generatedText: string = template.text;
+                            for (const field of Object.keys(template.fields)) {
+                                generatedText = generatedText.replace(
+                                    new RegExp(`\{\{${field}:[^\}]*\}\}`, "g"),
+                                    letter.fields[field] ?? "UNKNOWN"
+                                );
+                            }
+                            for (const field of Object.keys(userInfo)) {
+                                generatedText = generatedText.replace(
+                                    new RegExp(`\{\{${field}:[^\}]*\}\}`, "g"),
+                                    (userInfo as any)[field] ?? "UNKNOWN"
+                                );
+                            }
+                            console.log(generatedText);
+                        })
+                    }
+                >
+                    Generate All
+                </Button>
                 <CardHeader
                     title="Letter Generator"
                     subheader="Individual Letters"
@@ -364,7 +407,9 @@ export function CoverLetterPage() {
                                         const letterFields: {
                                             [key: string]: string;
                                         } = {};
-                                        Object.keys(selectedTemplate).forEach(
+                                        Object.keys(
+                                            selectedTemplate.fields
+                                        ).forEach(
                                             (v) => (letterFields[v] = "")
                                         );
 

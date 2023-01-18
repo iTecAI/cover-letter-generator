@@ -5,3 +5,18 @@
         }
     }
 }
+
+.template-name {
+    font-size: 10px;
+    opacity: 0.5;
+    font-weight: normal;
+}
+
+.letters.section {
+    position: relative;
+    .generate-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+    }
+}
