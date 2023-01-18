@@ -50,3 +50,9 @@ export const defaultFields: {
         label: "Date",
     },
 };
+
+export type CoverLetter = {
+    name: string;
+    template: Template;
+    fields: { [key: string]: string };
+};
