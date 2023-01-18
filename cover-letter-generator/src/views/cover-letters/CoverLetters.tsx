@@ -55,11 +55,11 @@ function CoverLetterItem(props: {
                     {Object.keys(props.letter.template.fields).map((value) => {
                         const field = props.letter.template.fields[value];
                         return (
-                            <Grid item xs={field.wide ? 12 : 6}>
+                            <Grid item xs={field.wide ? 12 : 6} key={value}>
                                 <TextField
                                     label={field.label}
                                     placeholder={field.placeholder ?? undefined}
-                                    value={props.letter.fields[value]}
+                                    value={props.letter.fields[value] ?? ""}
                                     onChange={(event) =>
                                         props.setLetter({
                                             ...props.letter,
@@ -91,6 +91,10 @@ export function CoverLetterPage() {
 
     const [templates, setTemplates] = useState<[Template, string][]>([]);
     const [lastEvent, setLastEvent] = useState<Object>({});
+    const [selectedTemplate, setSelectedTemplate] = useState<null | Template>(
+        null
+    );
+    const [letters, setLetters] = useState<{ [key: string]: CoverLetter }>({});
 
     async function updateTemplates() {
         const templateFiles: string[] = await fs.readdir("templates");
@@ -112,6 +116,9 @@ export function CoverLetterPage() {
         }
 
         setTemplates(newTemplates);
+        if (selectedTemplate === null && newTemplates.length > 0) {
+            setSelectedTemplate(newTemplates[0][0]);
+        }
     }
 
     useEffect(() => {
@@ -129,9 +136,6 @@ export function CoverLetterPage() {
             }
         })();
     }, []);
-
-    const [selectedTemplate, setSelectedTemplate] = useState<"" | Template>("");
-    const [letters, setLetters] = useState<{ [key: string]: CoverLetter }>({});
 
     return (
         <Stack spacing={2} className="form-root">
@@ -240,46 +244,60 @@ export function CoverLetterPage() {
                 <CardContent>
                     <Stack spacing={2}>
                         <Stack spacing={1} direction={"row"}>
-                            <Autocomplete
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        InputProps={{
-                                            ...params.InputProps,
-                                            startAdornment: (
-                                                <MdTableRows size={20} />
-                                            ),
-                                        }}
-                                    />
-                                )}
-                                options={templates.map((v) => {
-                                    return { file: v[1], ...v[0] };
-                                })}
-                                getOptionLabel={(option) =>
-                                    typeof option === "string"
-                                        ? option
-                                        : option.name
-                                }
-                                value={selectedTemplate}
-                                onChange={(event, value) =>
-                                    typeof value === "string"
-                                        ? setSelectedTemplate("")
-                                        : setSelectedTemplate(value)
-                                }
-                                multiple={false}
-                                freeSolo={false}
-                                disableClearable
-                                fullWidth
-                                sx={{ width: "calc(100% - 64px)" }}
-                            />
+                            {templates.length > 0 ? (
+                                <Autocomplete
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                startAdornment: (
+                                                    <MdTableRows size={20} />
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                    options={templates.map((v) => {
+                                        return { file: v[1], ...v[0] };
+                                    })}
+                                    getOptionLabel={(option) =>
+                                        typeof option === "string"
+                                            ? option
+                                            : option.name
+                                    }
+                                    value={selectedTemplate ?? templates[0][0]}
+                                    onChange={(event, value) =>
+                                        setSelectedTemplate(value)
+                                    }
+                                    multiple={false}
+                                    freeSolo={false}
+                                    disableClearable
+                                    fullWidth
+                                    sx={{ width: "calc(100% - 64px)" }}
+                                    isOptionEqualToValue={(option, value) =>
+                                        true
+                                    }
+                                />
+                            ) : (
+                                <TextField
+                                    disabled
+                                    InputProps={{
+                                        startAdornment: (
+                                            <MdTableRows size={20} />
+                                        ),
+                                    }}
+                                    fullWidth
+                                    variant="outlined"
+                                />
+                            )}
                             <IconButton
                                 color="success"
                                 sx={{
                                     minWidth: "56px",
                                 }}
-                                disabled={selectedTemplate === ""}
+                                disabled={selectedTemplate === null}
                                 onClick={() => {
-                                    if (selectedTemplate !== "") {
+                                    if (selectedTemplate !== null) {
                                         const letterFields: {
                                             [key: string]: string;
                                         } = {};
