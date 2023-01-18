@@ -53,6 +53,6 @@ export const defaultFields: {
 
 export type CoverLetter = {
     name: string;
-    template: Template;
+    template: string;
     fields: { [key: string]: string };
 };

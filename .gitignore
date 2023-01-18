@@ -104,3 +104,4 @@ dist
 .tern-port
 
 cover-letter-generator/templates/*.template.json
+cover-letter-generator/output/*.letter.json

@@ -34,8 +34,13 @@ const fs = window.require("node:fs/promises");
 function CoverLetterItem(props: {
     letter: CoverLetter;
     setLetter: (letter: CoverLetter) => void;
+    templates: [Template, string][];
 }): JSX.Element {
-    return (
+    const temp: Template | null =
+        props.templates.filter((v) => v[1] === props.letter.template)[0][0] ??
+        null;
+
+    return temp ? (
         <Accordion className="cover-letter-item">
             <AccordionSummary expandIcon={<MdExpandMore size={24} />}>
                 <TextField
@@ -52,8 +57,8 @@ function CoverLetterItem(props: {
             </AccordionSummary>
             <AccordionDetails>
                 <Grid container spacing={2}>
-                    {Object.keys(props.letter.template.fields).map((value) => {
-                        const field = props.letter.template.fields[value];
+                    {Object.keys(temp.fields).map((value) => {
+                        const field = temp.fields[value];
                         return (
                             <Grid item xs={field.wide ? 12 : 6} key={value}>
                                 <TextField
@@ -77,6 +82,8 @@ function CoverLetterItem(props: {
                 </Grid>
             </AccordionDetails>
         </Accordion>
+    ) : (
+        <></>
     );
 }
 
@@ -91,9 +98,9 @@ export function CoverLetterPage() {
 
     const [templates, setTemplates] = useState<[Template, string][]>([]);
     const [lastEvent, setLastEvent] = useState<Object>({});
-    const [selectedTemplate, setSelectedTemplate] = useState<null | Template>(
-        null
-    );
+    const [selectedTemplate, setSelectedTemplate] = useState<
+        null | ({ file: string } & Template)
+    >(null);
     const [letters, setLetters] = useState<{ [key: string]: CoverLetter }>({});
 
     async function updateTemplates() {
@@ -117,13 +124,53 @@ export function CoverLetterPage() {
 
         setTemplates(newTemplates);
         if (selectedTemplate === null && newTemplates.length > 0) {
-            setSelectedTemplate(newTemplates[0][0]);
+            setSelectedTemplate({
+                file: newTemplates[0][1],
+                ...newTemplates[0][0],
+            });
+        }
+    }
+
+    async function updateLetters() {
+        const letterFiles: string[] = await fs.readdir("output");
+        const newLetters: { [key: string]: CoverLetter } = {};
+        for (const file of letterFiles) {
+            if (file.endsWith(".letter.json")) {
+                try {
+                    const contents: string = await fs.readFile(
+                        path.join(".", "output", file),
+                        {
+                            encoding: "utf8",
+                        }
+                    );
+                    newLetters[file.split(".")[0]] = JSON.parse(contents);
+                } catch (err) {
+                    console.error(err.message);
+                }
+            }
+        }
+
+        if (JSON.stringify(newLetters) !== JSON.stringify(letters)) {
+            setLetters(newLetters);
         }
     }
 
     useEffect(() => {
+        (async function () {
+            const cache: string[] = await fs.readdir("output");
+            const fnames = Object.keys(letters).map((v) => `${v}.letter.json`);
+            for (const f of cache) {
+                if (!fnames.includes(f)) {
+                    fs.rm(path.join("output", `${f}.letter.json`));
+                }
+            }
+        })();
+    }, [letters]);
+
+    useEffect(() => {
         const watcherAbort = new AbortController();
         updateTemplates();
+        updateLetters();
         (async () => {
             const watcher = fs.watch("templates", {
                 signal: watcherAbort.signal,
@@ -132,6 +179,17 @@ export function CoverLetterPage() {
                 if (JSON.stringify(event) !== JSON.stringify(lastEvent)) {
                     setLastEvent(event);
                     updateTemplates();
+                }
+            }
+        })();
+        (async () => {
+            const watcher = fs.watch("output", {
+                signal: watcherAbort.signal,
+            });
+            for await (const event of watcher) {
+                if (JSON.stringify(event) !== JSON.stringify(lastEvent)) {
+                    setLastEvent(event);
+                    updateLetters();
                 }
             }
         })();
@@ -265,7 +323,12 @@ export function CoverLetterPage() {
                                             ? option
                                             : option.name
                                     }
-                                    value={selectedTemplate ?? templates[0][0]}
+                                    value={
+                                        selectedTemplate ?? {
+                                            file: templates[0][1],
+                                            ...templates[0][0],
+                                        }
+                                    }
                                     onChange={(event, value) =>
                                         setSelectedTemplate(value)
                                     }
@@ -305,14 +368,31 @@ export function CoverLetterPage() {
                                             (v) => (letterFields[v] = "")
                                         );
 
+                                        const key: string = Math.random()
+                                            .toString()
+                                            .split(".")[1];
+
                                         setLetters({
                                             ...letters,
-                                            [Math.random().toString()]: {
+                                            [key]: {
                                                 name: "New Letter",
-                                                template: selectedTemplate,
+                                                template: selectedTemplate.file,
                                                 fields: letterFields,
                                             },
                                         });
+
+                                        fs.writeFile(
+                                            path.join(
+                                                "output",
+                                                `${key}.letter.json`
+                                            ),
+                                            JSON.stringify({
+                                                name: "New Letter",
+                                                template: selectedTemplate.file,
+                                                fields: letterFields,
+                                            }),
+                                            { encoding: "utf8" }
+                                        );
                                     }
                                 }}
                             >
@@ -323,13 +403,22 @@ export function CoverLetterPage() {
                             {Object.keys(letters).map((v) => (
                                 <CoverLetterItem
                                     letter={letters[v]}
-                                    setLetter={(letter) =>
+                                    setLetter={(letter) => {
                                         setLetters({
                                             ...letters,
                                             [v]: letter,
-                                        })
-                                    }
+                                        });
+                                        fs.writeFile(
+                                            path.join(
+                                                "output",
+                                                `${v}.letter.json`
+                                            ),
+                                            JSON.stringify(letter),
+                                            { encoding: "utf8" }
+                                        );
+                                    }}
                                     key={v}
+                                    templates={templates}
                                 />
                             ))}
                         </Masonry>
