@@ -18,6 +18,7 @@ import "./style.scss";
 import {
     MdAdd,
     MdCheck,
+    MdDelete,
     MdDescription,
     MdExpandMore,
     MdPerson,
@@ -37,9 +38,13 @@ const fs = window.require("node:fs/promises");
 
 function CoverLetterItem(props: {
     letter: CoverLetter;
-    setLetter: (letter: CoverLetter) => void;
+    setLetter: (letter: CoverLetter | null) => void;
     templates: [Template, string][];
+    userInfo: UserInfo;
 }): JSX.Element {
+    if (!props.letter) {
+        return <></>;
+    }
     const temp: Template | null =
         props.templates.filter((v) => v[1] === props.letter.template)[0][0] ??
         null;
@@ -62,6 +67,68 @@ function CoverLetterItem(props: {
                     <Typography variant="subtitle1" className="template-name">
                         {temp.name}
                     </Typography>
+                </Stack>
+                <Stack className="actions" direction="row" spacing={1}>
+                    <IconButton
+                        color="error"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            props.setLetter(null);
+                        }}
+                    >
+                        <MdDelete size={24} />
+                    </IconButton>
+                    <IconButton
+                        color="success"
+                        disabled={
+                            Object.values(props.userInfo).filter(
+                                (v) => v === ""
+                            ).length > 0
+                        }
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const letter: CoverLetter = props.letter;
+                            const template: Template = (props.templates.filter(
+                                (t) => t[1] === letter.template
+                            )[0] ?? [])[0];
+                            if (template === undefined) {
+                                return;
+                            }
+                            let generatedText: string = template.text;
+                            for (const field of Object.keys(template.fields)) {
+                                generatedText = generatedText.replace(
+                                    new RegExp(`\{\{${field}:[^\}]*\}\}`, "g"),
+                                    letter.fields[field] ?? "UNKNOWN"
+                                );
+                            }
+                            for (const field of Object.keys(props.userInfo)) {
+                                console.log((props.userInfo as any)[field]);
+                                generatedText = generatedText.replace(
+                                    new RegExp(`\{\{${field}:[^\}]*\}\}`, "g"),
+                                    field === "date"
+                                        ? props.userInfo.date.format(
+                                              "MMM Do YYYY"
+                                          )
+                                        : (props.userInfo as any)[field] ??
+                                              "UNKNOWN"
+                                );
+                            }
+                            html2pdf()
+                                .set({
+                                    margin: 0.5,
+                                    filename: `${letter.name}.pdf`,
+                                    image: { type: "png", quality: 1 },
+                                    jsPDF: { unit: "in" },
+                                })
+                                .from(
+                                    `<span style="font-family: serif;">${generatedText}</span>`
+                                )
+                                .save();
+                            props.setLetter(null);
+                        }}
+                    >
+                        <MdCheck size={24} />
+                    </IconButton>
                 </Stack>
             </AccordionSummary>
             <AccordionDetails>
@@ -287,52 +354,6 @@ export function CoverLetterPage() {
                 </CardContent>
             </Card>
             <Card variant="outlined" className="letters section">
-                <Button
-                    variant="contained"
-                    color="success"
-                    startIcon={<MdCheck size={24} />}
-                    className="generate-btn"
-                    onClick={() =>
-                        Object.keys(letters).forEach((v) => {
-                            const letter: CoverLetter = letters[v];
-                            const template: Template = (templates.filter(
-                                (t) => t[1] === letter.template
-                            )[0] ?? [])[0];
-                            if (template === undefined) {
-                                return;
-                            }
-                            let generatedText: string = template.text;
-                            for (const field of Object.keys(template.fields)) {
-                                generatedText = generatedText.replace(
-                                    new RegExp(`\{\{${field}:[^\}]*\}\}`, "g"),
-                                    letter.fields[field] ?? "UNKNOWN"
-                                );
-                            }
-                            for (const field of Object.keys(userInfo)) {
-                                console.log((userInfo as any)[field]);
-                                generatedText = generatedText.replace(
-                                    new RegExp(`\{\{${field}:[^\}]*\}\}`, "g"),
-                                    field === "date"
-                                        ? userInfo.date.format("MMM Do YYYY")
-                                        : (userInfo as any)[field] ?? "UNKNOWN"
-                                );
-                            }
-                            html2pdf()
-                                .set({
-                                    margin: 0.5,
-                                    filename: `${letter.name}.${v}.pdf`,
-                                    image: { type: "png", quality: 1 },
-                                    jsPDF: { unit: "in" },
-                                })
-                                .from(
-                                    `<span style="font-family: serif;">${generatedText}</span>`
-                                )
-                                .save();
-                        })
-                    }
-                >
-                    Generate All
-                </Button>
                 <CardHeader
                     title="Letter Generator"
                     subheader="Individual Letters"
@@ -451,19 +472,30 @@ export function CoverLetterPage() {
                                     setLetter={(letter) => {
                                         setLetters({
                                             ...letters,
-                                            [v]: letter,
+                                            [v]: letter ?? undefined,
                                         });
-                                        fs.writeFile(
-                                            path.join(
-                                                "output",
-                                                `${v}.letter.json`
-                                            ),
-                                            JSON.stringify(letter),
-                                            { encoding: "utf8" }
-                                        );
+                                        if (letter === null) {
+                                            fs.rm(
+                                                path.join(
+                                                    "output",
+                                                    `${v}.letter.json`
+                                                ),
+                                                { force: true }
+                                            );
+                                        } else {
+                                            fs.writeFile(
+                                                path.join(
+                                                    "output",
+                                                    `${v}.letter.json`
+                                                ),
+                                                JSON.stringify(letter),
+                                                { encoding: "utf8" }
+                                            );
+                                        }
                                     }}
                                     key={v}
                                     templates={templates}
+                                    userInfo={userInfo}
                                 />
                             ))}
                         </Masonry>
