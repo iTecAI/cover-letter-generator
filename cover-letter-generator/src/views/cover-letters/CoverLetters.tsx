@@ -30,6 +30,7 @@ import { useForm } from "../../util/forms";
 import { CoverLetter, Template, UserInfo } from "../../types";
 import { useEffect, useState } from "react";
 import { Masonry } from "@mui/lab";
+import html2pdf from "html2pdf.js";
 
 const path = window.require("node:path");
 const fs = window.require("node:fs/promises");
@@ -162,20 +163,6 @@ export function CoverLetterPage() {
             setLetters(newLetters);
         }
     }
-
-    useEffect(() => {
-        (async function () {
-            const cache: string[] = await fs.readdir("output");
-            const fnames = Object.keys(letters).map((v) => `${v}.letter.json`);
-            if (fnames.length === 0) {
-                for (const f of cache) {
-                    if (!fnames.includes(f)) {
-                        fs.rm(path.join("output", f));
-                    }
-                }
-            }
-        })();
-    }, [letters]);
 
     useEffect(() => {
         const watcherAbort = new AbortController();
@@ -322,12 +309,25 @@ export function CoverLetterPage() {
                                 );
                             }
                             for (const field of Object.keys(userInfo)) {
+                                console.log((userInfo as any)[field]);
                                 generatedText = generatedText.replace(
                                     new RegExp(`\{\{${field}:[^\}]*\}\}`, "g"),
-                                    (userInfo as any)[field] ?? "UNKNOWN"
+                                    field === "date"
+                                        ? userInfo.date.format("MMM Do YYYY")
+                                        : (userInfo as any)[field] ?? "UNKNOWN"
                                 );
                             }
-                            console.log(generatedText);
+                            html2pdf()
+                                .set({
+                                    margin: 0.5,
+                                    filename: `${letter.name}.${v}.pdf`,
+                                    image: { type: "png", quality: 1 },
+                                    jsPDF: { unit: "in" },
+                                })
+                                .from(
+                                    `<span style="font-family: serif;">${generatedText}</span>`
+                                )
+                                .save();
                         })
                     }
                 >

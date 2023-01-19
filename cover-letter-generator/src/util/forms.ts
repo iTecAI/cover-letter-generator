@@ -11,7 +11,7 @@ function reduceForm(
     if (isSetAction(action)) {
         return action.data;
     } else {
-        const newState = JSON.parse(JSON.stringify(state));
+        const newState = { ...state };
         newState[action.field] = action.value;
         return newState;
     }
