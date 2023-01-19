@@ -49,6 +49,7 @@
     "@mui/material": "^5.11.4",
     "@mui/x-date-pickers": "^5.0.14",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.10",
+    "electron-packager": "^17.1.1",
     "electron-squirrel-startup": "^1.0.0",
     "html2pdf.js": "^0.10.1",
     "jspdf": "^2.5.1",

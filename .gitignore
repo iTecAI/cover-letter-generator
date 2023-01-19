@@ -105,3 +105,5 @@ dist
 
 cover-letter-generator/templates/*.template.json
 cover-letter-generator/output/*.letter.json
+*-win32-x64
+*.zip
